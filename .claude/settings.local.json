@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(not exist *)",
+      "Bash(mkdir -p /c/Users/yugao/chatgpt_frontend_clone/.claude)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}
