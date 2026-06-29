@@ -33,6 +33,26 @@
         <div class="sidebar-history" id="chatHistory"></div>
 
         <div class="sidebar-bottom">
+
+            <!-- ── Settings ──────────────────────────────────────── -->
+            <button class="settings-trigger" id="settingsBtn" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </button>
+
+            <div class="settings-panel" id="settingsPanel">
+                <div class="setting-item">
+                    <div class="setting-text">
+                        <span class="setting-name">Reading Mode</span>
+                        <span class="setting-desc">Show pages instantly — ideal for books</span>
+                    </div>
+                    <label class="toggle" title="Toggle reading mode">
+                        <input type="checkbox" id="readingModeCheck">
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+            </div>
+
             <div class="user-profile">
                 <div class="user-avatar">U</div>
                 <span class="user-name">User</span>
@@ -61,6 +81,34 @@
         <!-- ── MESSAGES ─────────────────────────────────────────────── -->
         <!-- Welcome screen and messages both live here, managed by JS -->
         <div class="messages" id="messages"></div>
+
+        <!-- ── EPUB NAVIGATION TOOLBAR ──────────────────────────────── -->
+        <!-- Shown automatically when an EPUB book is open; hidden otherwise -->
+        <div class="epub-toolbar" id="epubToolbar">
+            <div class="epub-toolbar-inner">
+                <button class="epub-btn" id="epubPrevBtn" title="Previous page (← Prev)">
+                    <i class="fa-solid fa-chevron-left"></i>
+                    <span>Prev</span>
+                </button>
+                <div class="epub-info">
+                    <span class="epub-chapter-name" id="epubChapterName"></span>
+                    <span class="epub-page-num" id="epubPageNum"></span>
+                </div>
+                <button class="epub-btn" id="epubTocBtn" title="Table of contents">
+                    <i class="fa-solid fa-list-ul"></i>
+                </button>
+                <button class="epub-btn" id="epubGotoBtn" title="Jump to page…">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                </button>
+                <button class="epub-btn primary" id="epubNextBtn" title="Next page (Next →)">
+                    <span>Next</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="epub-progress">
+                <div class="epub-progress-fill" id="epubProgressFill"></div>
+            </div>
+        </div>
 
         <!-- ── INPUT AREA ───────────────────────────────────────────── -->
         <div class="input-area">
@@ -98,6 +146,8 @@
 
     </div>
 
+    <!-- epub.js — EPUB reader (JSZip loaded lazily on first /epub use) -->
+    <script src="scripts/epub.js"></script>
     <!-- browser.js defines all state/fetch/render logic; script.js wires up DOM events -->
     <script src="scripts/browser.js"></script>
     <script src="scripts/script.js"></script>

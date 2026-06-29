@@ -111,6 +111,7 @@ function createNewSession() {
     saveSessions();
     renderSidebar();
     renderMessages();
+    updateEpubToolbar();
 }
 
 function switchSession(id) {
@@ -119,6 +120,7 @@ function switchSession(id) {
     state.currentSession = found;
     renderMessages();
     renderSidebar();
+    updateEpubToolbar();
 }
 
 function saveSessions() {
@@ -127,6 +129,7 @@ function saveSessions() {
             ...s,
             messages: s.messages.slice(-50),
             lastData: null,
+            epubData: null, // never persist raw chapter text — too large for localStorage
         }));
         localStorage.setItem('pgb_sessions', JSON.stringify(toSave));
     } catch (_) {
@@ -177,8 +180,50 @@ async function handleInput(raw) {
         return;
     }
 
-    // ── /next — advance pagination ────────────────────────────────
+    // ── EPUB commands ─────────────────────────────────────────────
+
+    if (lower === '/epub') {
+        await openEpub(); // defined in epub.js
+        return;
+    }
+
+    if (lower === '/prev') {
+        await epubPagePrev(); // defined in epub.js
+        return;
+    }
+
+    if (lower === '/toc') {
+        await epubShowToc(); // defined in epub.js
+        return;
+    }
+
+    if (lower === '/bookmark') {
+        await epubResume(); // show last saved position
+        return;
+    }
+
+    // /chapter N — jump to chapter
+    const chapterMatch = lower.match(/^\/chapter\s+(\d+)$/);
+    if (chapterMatch) {
+        await epubJumpChapter(parseInt(chapterMatch[1], 10));
+        return;
+    }
+
+    // /goto N — jump to global page number
+    const gotoMatch = lower.match(/^\/goto\s+(\d+)$/);
+    if (gotoMatch) {
+        await epubGotoPage(parseInt(gotoMatch[1], 10));
+        return;
+    }
+
+    // ── /next — epub page OR feed pagination ──────────────────────
     if (lower === '/next') {
+        // If a book is currently loaded in this session, advance the book
+        if (state.currentSession.epubData) {
+            await epubPageNext(); // defined in epub.js
+            return;
+        }
+        // Otherwise fall through to feed pagination
         if (!state.currentSession.lastCommand) {
             await respondWith('No active feed to page. Try `/news`, `/tech`, `/bbc`, or `/reddit`.', 300);
             return;
@@ -520,6 +565,14 @@ async function respondWith(markdown, thinkMs = 0) {
 // ── Typing animation ─────────────────────────────────────────────
 
 async function typeText(element, text) {
+    // Reading mode: render instantly (no animation) — better for book reading
+    if (getRenderMode() === 'reading') {
+        element.innerHTML = renderMarkdown(text);
+        scrollBottom();
+        return;
+    }
+
+    // Response mode (default): token-by-token streaming animation
     const tokens = text.split(/(\s+)/);
     let accumulated = '';
     const BATCH = 6;
@@ -599,12 +652,12 @@ function buildWelcome() {
         <img src="assets/images/chatgpt.png" alt="ChatGPT" class="welcome-logo">
         <h1 class="welcome-title">What can I help with?</h1>
         <div class="welcome-chips">
+            <button class="chip" data-cmd="/epub">Open a book</button>
             <button class="chip" data-cmd="/bbc">BBC News</button>
             <button class="chip" data-cmd="/hn">Hacker News</button>
             <button class="chip" data-cmd="/tech">Tech feeds</button>
             <button class="chip" data-cmd="/news">World news</button>
             <button class="chip" data-cmd="/science">Science</button>
-            <button class="chip" data-cmd="/reddit worldnews">Reddit World</button>
             <button class="chip" data-cmd="/random">Surprise me</button>
             <button class="chip" data-cmd="/sources">All sources</button>
         </div>`;
@@ -743,11 +796,70 @@ function fmtScore(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n
 function delay(ms)   { return new Promise(r => setTimeout(r, ms)); }
 
 // ================================================================
+//  SETTINGS  (render mode)
+// ================================================================
+
+/**
+ * 'reading'  — render entire block at once (instant, no animation)
+ * 'response' — token-by-token animation (default)
+ */
+function getRenderMode() {
+    return localStorage.getItem('pgb_render_mode') || 'response';
+}
+
+function setRenderMode(mode) {
+    localStorage.setItem('pgb_render_mode', mode);
+}
+
+// ================================================================
+//  EPUB TOOLBAR  (show/update the nav strip above the input box)
+// ================================================================
+
+/**
+ * Show the EPUB toolbar and update its contents to reflect the
+ * current reading position, or hide it if no book is open.
+ * Called after every epub navigation and on session switch.
+ */
+function updateEpubToolbar() {
+    const toolbar = document.getElementById('epubToolbar');
+    if (!toolbar) return;
+
+    const epub = state.currentSession?.epubData;
+    if (!epub) {
+        toolbar.style.display = 'none';
+        return;
+    }
+
+    toolbar.style.display = 'block';
+
+    const ch    = epub.chapters[epub.chapterIdx];
+    const global = globalPageNum(epub); // defined in epub.js
+    const total  = epub.chapters.reduce((s, c) => s + c.chunks.length, 0);
+    const pct    = total > 1 ? Math.round((global - 1) / (total - 1) * 100) : 100;
+
+    const nameEl     = document.getElementById('epubChapterName');
+    const pageEl     = document.getElementById('epubPageNum');
+    const progressEl = document.getElementById('epubProgressFill');
+
+    if (nameEl)     nameEl.textContent     = ch?.title || '';
+    if (pageEl)     pageEl.textContent     = `p. ${global} / ${total}`;
+    if (progressEl) progressEl.style.width = `${pct}%`;
+}
+
+// ================================================================
 //  HELP & SOURCES TEXT
 // ================================================================
 
 function getHelpText() {
     return `## ChatGPT Browser — Command Reference
+
+**EPUB Reader**
+- \`/epub\` — open a .epub file from your computer
+- \`/next\` \`/prev\` — turn the page forward / backward
+- \`/toc\` — table of contents
+- \`/chapter N\` — jump to chapter N
+- \`/goto N\` — jump to global page N
+- \`/bookmark\` — show your last saved position
 
 **Reddit**
 - \`/reddit\` — r/popular (hot)
@@ -772,12 +884,10 @@ function getHelpText() {
 - \`/culture\` → \`/longreads\` \`/atlantic\`
 
 **Navigation**
-- \`/next\` — next page or next source in category
+- \`/next\` — next page (book or feed)
 - \`/sources\` — full source listing
 - \`/clear\` — clear chat
-- \`/help\` — this message
-
-**After fetching Reddit posts**, ask: *"summarize the top posts"* or *"more about post 3"*`;
+- \`/help\` — this message`;
 }
 
 function getSourcesList() {

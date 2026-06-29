@@ -625,3 +625,215 @@ body {
     .welcome-chips { gap: 7px; }
     .chip { font-size: 12.5px; padding: 7px 14px; }
 }
+
+/* ── Settings trigger button ────────────────────────────────────── */
+.settings-trigger {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+    font-family: inherit;
+    margin-bottom: 2px;
+}
+.settings-trigger:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+.settings-trigger i { font-size: 13px; }
+
+/* Settings panel — collapses via max-height transition */
+.settings-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    margin-bottom: 2px;
+}
+.settings-panel.open {
+    max-height: 120px;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-hover);
+    border-radius: 10px;
+    margin-bottom: 4px;
+}
+
+.setting-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.setting-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.setting-desc {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+/* ── Toggle switch ───────────────────────────────────────────────── */
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 11px;
+    background: #3d3d3d;
+    transition: background 0.2s;
+}
+
+.toggle input:checked + .toggle-track {
+    background: var(--accent);
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+}
+
+.toggle input:checked + .toggle-track .toggle-thumb {
+    transform: translateX(16px);
+}
+
+/* ── EPUB navigation toolbar ────────────────────────────────────── */
+.epub-toolbar {
+    display: none;  /* shown by updateEpubToolbar() in browser.js */
+    padding: 0 20px 6px;
+    flex-shrink: 0;
+}
+
+.epub-toolbar-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 5px 8px;
+}
+
+.epub-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.epub-btn:hover {
+    background: var(--bg-active);
+    color: var(--text-primary);
+}
+
+.epub-btn.primary {
+    background: var(--bg-active);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.epub-btn.primary:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.epub-info {
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    padding: 0 6px;
+    overflow: hidden;
+}
+
+.epub-chapter-name {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.epub-page-num {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+    line-height: 1.3;
+}
+
+/* Thin reading-progress bar below the toolbar */
+.epub-progress {
+    max-width: 800px;
+    margin: 4px auto 0;
+    height: 2px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 1px;
+    overflow: hidden;
+}
+
+.epub-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 1px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
+@media (max-width: 480px) {
+    .epub-btn span { display: none; }   /* hide text labels on very small screens */
+    .epub-btn { padding: 6px 8px; }
+}

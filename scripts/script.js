@@ -98,6 +98,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chip?.dataset.cmd) handleInput(chip.dataset.cmd);
     });
 
+    // ── Settings panel ───────────────────────────────────────────
+    const settingsBtn      = document.getElementById('settingsBtn');
+    const settingsPanel    = document.getElementById('settingsPanel');
+    const readingModeCheck = document.getElementById('readingModeCheck');
+
+    // Restore checkbox state from localStorage
+    if (readingModeCheck) {
+        readingModeCheck.checked = getRenderMode() === 'reading'; // getRenderMode defined in browser.js
+    }
+
+    settingsBtn?.addEventListener('click', () => {
+        settingsPanel?.classList.toggle('open');
+    });
+
+    readingModeCheck?.addEventListener('change', () => {
+        setRenderMode(readingModeCheck.checked ? 'reading' : 'response');
+    });
+
+    // ── EPUB toolbar buttons ──────────────────────────────────────
+    document.getElementById('epubPrevBtn')?.addEventListener('click', () => {
+        handleInput('/prev');
+    });
+
+    document.getElementById('epubNextBtn')?.addEventListener('click', () => {
+        handleInput('/next');
+    });
+
+    document.getElementById('epubTocBtn')?.addEventListener('click', () => {
+        handleInput('/toc');
+    });
+
+    // Goto: pre-fill input with "/goto " so user just types the page number
+    document.getElementById('epubGotoBtn')?.addEventListener('click', () => {
+        chatInput.value = '/goto ';
+        chatInput.focus();
+        chatInput.dispatchEvent(new Event('input')); // triggers updateSendBtn()
+    });
+
     // ── Auto-focus the input on load ──────────────────────────────
     chatInput.focus();
 });
